@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools==68.2.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uerl"
+version = "1.0.0"
+description = "Reinforcement learning package for Unreal Engine with Ray Backend."
+authors = [
+    {name = "Pavel Konarik", email = "konarik135@gmail.com"}
+]
+keywords = ["reinforcement-learning", "unreal-engine", "ray"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+requires-python = ">=3.8"
+
+dependencies = [
+    "setuptools==68.2.2",
+    "websocket-client==1.7.0",
+    "ray[default,rllib]==2.9.3",
+    "numpy==1.26.4",
+    "cbor2==5.6.2",
+    "ipython==8.31.0",
+    "imageio==2.34.0",
+    "imageio-ffmpeg==0.4.7",
+    "pillow==10.2.0",
+    "tensorboard==2.16.2",
+    "pyarrow==15.0.0",
+    "gdown==5.2.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.optional-dependencies]
+torch = [
+    "torch==2.2.1",
+    "torchvision==0.17.1",
+    "torchaudio==2.2.1"
+]

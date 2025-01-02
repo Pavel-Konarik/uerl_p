@@ -1,0 +1,111 @@
+# Create the MinIO Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: minio
+  labels:
+    name: minio
+---
+# Persistent Volume for MinIO
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: minio-pv
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /home/pavel/minio_storage
+---
+# Persistent Volume Claim for MinIO
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+  namespace: minio
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+# MinIO Pod Deployment
+apiVersion: v1
+kind: Pod
+metadata:
+  name: minio
+  namespace: minio
+  labels:
+    app: minio
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: rayv2-cpu3
+  containers:
+  - name: minio
+    image: quay.io/minio/minio:latest
+    args:
+      - minio
+      - server
+      - /data
+      - --console-address
+      - ":9090"
+    volumeMounts:
+    - name: minio-data
+      mountPath: /data
+    env:
+    - name: MINIO_ROOT_USER
+      value: "minioadmin" # Replace with your desired username
+    - name: MINIO_ROOT_PASSWORD
+      value: "minioadmin" # Replace with your desired password
+    lifecycle:
+      postStart:
+        exec:
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              sleep 10 && \
+              echo "Setting MinIO alias..." && \
+              mc alias set rayminio http://localhost:9000 minioadmin minioadmin && \
+              echo "Checking if the bucket 'rayexperiments' already exists..." && \
+              if mc ls rayminio/rayexperiments >/dev/null 2>&1; then \
+                echo "Bucket 'rayexperiments' already exists. Skipping creation."; \
+              else \
+                echo "Bucket 'rayexperiments' does not exist. Creating bucket..." && \
+                mc mb rayminio/rayexperiments && \
+                echo "Bucket created successfully."; \
+              fi && \
+              echo "Setting public bucket policy..." && \
+              echo '{"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Principal": "*", "Action": ["s3:GetObject", "s3:PutObject", "s3:ListBucket"], "Resource": ["arn:aws:s3:::rayexperiments", "arn:aws:s3:::rayexperiments/*"]}]}' > public-policy.json && \
+              mc anonymous set-json public-policy.json rayminio/rayexperiments && \
+              echo "Bucket policy applied successfully."
+  volumes:
+  - name: minio-data
+    persistentVolumeClaim:
+      claimName: minio-pvc
+---
+# MinIO Service (NodePort)
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-service
+  namespace: minio
+spec:
+  selector:
+    app: minio
+  ports:
+  - protocol: TCP
+    port: 9000
+    targetPort: 9000
+    nodePort: 30007
+    name: api-port
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 30008
+    name: console-port
+  type: NodePort

@@ -1,0 +1,26 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{5A45A4CA-4EA6-6246-AC84-588FDCB38BED}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "RLExamples",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "ModelingToolsEditorMode",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		},
+		{
+			"Name": "CollectApples",
+			"Enabled": true
+		}
+	]
+}
